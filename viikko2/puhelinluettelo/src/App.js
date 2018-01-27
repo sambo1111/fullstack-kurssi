@@ -1,17 +1,27 @@
 import React from 'react';
+import axios from 'axios';
+import personService from './services/persons'
 
 class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      persons: [
-        { name: 'Arto Hellas', number: '0402932812' },
-        { name: 'Jari Sillanpää', number: '050298232' }
-      ],
+      persons: [],
       newName: '',
       newNumber: '',
       filter: ''
     }
+  }
+
+  componentWillMount() {
+    console.log('mount')
+    personService
+      .getAll()
+      .then(response => {
+        this.setState({
+          persons: response.data
+        })
+      })
   }
 
   addPerson = (event) => {
@@ -26,12 +36,27 @@ class App extends React.Component {
       name: this.state.newName,
       number: this.state.newNumber
     }
-    const persons = this.state.persons.concat(newPerson)
-    this.setState({
-      persons: persons,
-      newName: '',
-      newNumber: ''
-    })
+
+    personService
+      .create(newPerson)
+      .then(response => {
+        this.setState({
+          persons: this.state.persons.concat(response.data),
+          newName: '',
+          newNumber: ''
+        })
+      })
+  }
+
+  removePerson = (event) => {
+    personService
+      .remove(event.target.value)
+      .then (removedPerson => {
+        const persons = this.state.persons.filter(p => p.id == removedPerson.id)
+        this.setState({
+          persons: persons
+        })
+      })
   }
 
   handlePersonChange = (event) => {
@@ -55,36 +80,58 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <h2>Puhelinluettelo</h2>
-        <form>
-          <div>
-            rajaa näytettäviä <input value={this.state.filter} onChange={this.handleFilterChange}/>
-          </div>
-        </form>
-        <h3> Lisää uusi </h3>
-        <form onSubmit={this.addPerson}>
-          <div>
-            nimi: <input value={this.state.newName} onChange={this.handlePersonChange}/>
-          </div>
-          <div>
-            numero: <input value={this.state.newNumber} onChange={this.handleNumberChange}/>
-          </div>
-          <div>
-            <button type="submit">lisää</button>
-          </div>
-        </form>
-        <h2>Numerot</h2>
-        <Show state={this.state} />
+        <FilterForm state={this.state} handleFilterChange={this.handleFilterChange}/>
+        <AddPersonForm  state={this.state}
+                        addPerson={this.addPerson}
+                        handlePersonChange={this.handlePersonChange}
+                        handleNumberChange={this.handleNumberChange} />
+        <ShowNumbers state={this.state} removePerson={this.removePerson}/>
       </div>
     )
   }
 }
 
-const Show = ({state}) => {
-  const filtered = state.persons.filter(p => p.name.toLowerCase().includes(state.filter))
+const ShowNumbers = ({state, removePerson}) => {
+  const filtered = state.persons.filter(p => p.name.toLowerCase().includes(state.filter.toLowerCase()))
   return (
     <div>
-      {filtered.map(p => <li key={p.name}> {p.name} {p.number}</li>)}
+      <h2>Numerot</h2>
+      {filtered.map(p => <div key={p.name}>
+                          {p.name} {p.number}
+                          <button onClick={removePerson.bind(p.id)}> poista </button>
+                          </div>)}
+    </div>
+  )
+}
+
+const FilterForm = ({state, handleFilterChange}) => {
+  return (
+    <div>
+      <h2>Puhelinluettelo</h2>
+      <form>
+        <div>
+          rajaa näytettäviä <input value={state.filter} onChange={handleFilterChange}/>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+const AddPersonForm = ({state, addPerson, handlePersonChange, handleNumberChange}) => {
+  return (
+    <div>
+      <h3> Lisää uusi </h3>
+      <form onSubmit={addPerson}>
+        <div>
+          nimi: <input value={state.newName} onChange={handlePersonChange}/>
+        </div>
+        <div>
+          numero: <input value={state.newNumber} onChange={handleNumberChange}/>
+        </div>
+        <div>
+          <button type="submit">lisää</button>
+        </div>
+      </form>
     </div>
   )
 }
