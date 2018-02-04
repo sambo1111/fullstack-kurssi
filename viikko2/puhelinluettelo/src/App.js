@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import personService from './services/persons'
+import './index.css'
 
 class App extends React.Component {
   constructor(props) {
@@ -9,7 +10,8 @@ class App extends React.Component {
       persons: [],
       newName: '',
       newNumber: '',
-      filter: ''
+      filter: '',
+      notification: null
     }
   }
 
@@ -26,37 +28,82 @@ class App extends React.Component {
 
   addPerson = (event) => {
     event.preventDefault()
-
-    if (this.state.persons.map(p => p.name).includes(this.state.newName)) {
-      return (
-        alert("This person already exists.")
-      )
+    if (this.state.newName === '' || this.state.newNumber === '') {
+      return null
     }
+
     const newPerson = {
       name: this.state.newName,
       number: this.state.newNumber
     }
+    if (this.state.persons.map(p => p.name).includes(this.state.newName)) {
+        if (window.confirm("This person already exists. Do you want to update number?")) {
+          newPerson.id = this.state.persons.find(p => p.name === newPerson.name).id
+          personService
+          .update(newPerson)
+          .then(response => {
+            this.setState({
+              newName: '',
+              newNumber: '',
+              persons: this.state.persons.map(p => p.id !== newPerson.id ? p : newPerson),
+              notification: `Updated number for '${newPerson.name}'`
+            })
+            setTimeout(() => {
+            this.setState({notification: null})
+          }, 5000)
+          })
+          .catch(() => {
+            personService
+            .create(newPerson)
+            .then(response => {
+              this.setState({
+                persons: this.state.persons.concat(response.data),
+                newName: '',
+                newNumber: '',
+                notification: `New number added for contact '${newPerson.name}'`
+              })
+              setTimeout(() => {
+              this.setState({notification: null})
+            }, 5000)
+            })
+          })
+        }
 
-    personService
+    } else {
+
+      personService
       .create(newPerson)
       .then(response => {
         this.setState({
           persons: this.state.persons.concat(response.data),
           newName: '',
-          newNumber: ''
+          newNumber: '',
+          notification: `New number added for contact '${newPerson.name}'`
         })
+        setTimeout(() => {
+        this.setState({notification: null})
+      }, 5000)
       })
+    }
   }
 
-  removePerson = (event) => {
-    personService
-      .remove(event.target.value)
-      .then (removedPerson => {
-        const persons = this.state.persons.filter(p => p.id == removedPerson.id)
-        this.setState({
-          persons: persons
-        })
-      })
+  removePerson = (id) => {
+      return () => {
+        if (window.confirm("Do you want to delete this?")) {
+          personService
+          .remove(id)
+          .then (() => {
+            const persons = this.state.persons.filter(p => p.id !== id)
+            this.setState({
+              persons: persons,
+              notification: 'Contact deleted'
+            })
+            setTimeout(() => {
+            this.setState({notification: null})
+          }, 5000)
+          })
+        }
+        }
   }
 
   handlePersonChange = (event) => {
@@ -80,6 +127,7 @@ class App extends React.Component {
   render() {
     return (
       <div>
+        <Notification notification={this.state.notification} />
         <FilterForm state={this.state} handleFilterChange={this.handleFilterChange}/>
         <AddPersonForm  state={this.state}
                         addPerson={this.addPerson}
@@ -98,7 +146,7 @@ const ShowNumbers = ({state, removePerson}) => {
       <h2>Numerot</h2>
       {filtered.map(p => <div key={p.name}>
                           {p.name} {p.number}
-                          <button onClick={removePerson.bind(p.id)}> poista </button>
+                          <button onClick={removePerson(p.id)}> poista </button>
                           </div>)}
     </div>
   )
@@ -132,6 +180,17 @@ const AddPersonForm = ({state, addPerson, handlePersonChange, handleNumberChange
           <button type="submit">lisää</button>
         </div>
       </form>
+    </div>
+  )
+}
+
+const Notification = ({notification}) => {
+  if (notification == null) {
+    return null
+  }
+  return(
+    <div className="notification">
+      {notification}
     </div>
   )
 }

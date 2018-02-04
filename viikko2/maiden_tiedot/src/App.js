@@ -7,8 +7,7 @@ class App extends React.Component {
     super(props)
     this.state = {
       countries: [],
-      filter: '',
-      clickedName: ''
+      filter: ''
     }
   }
 
@@ -28,10 +27,12 @@ class App extends React.Component {
     })
   }
 
-  handleClickName = (event) => {
-    this.setState({
-
-    })
+  handleClickName = (name) => {
+    return () => {
+      this.setState({
+        filter: name
+      })
+    }
   }
 
   render() {
@@ -60,10 +61,9 @@ const ShowCountries = ({countries, handleClickName}) => {
     </div>
   )
 } else if (countries.length > 0) {
-    console.log(countries.length)
     return (
       <div>
-        {countries.map(c => <div key={c.name}>{c.name}</div>)}
+        {countries.map(c => <div key={c.name} onClick={handleClickName(c.name)}>{c.name}</div>)}
       </div>
     )
 }
