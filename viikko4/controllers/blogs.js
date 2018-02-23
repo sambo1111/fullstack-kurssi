@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 
 blogsRouter.get('/', async (request, response) => {
   try {
-    return response.json(await Blog.find({}).populate('user', {username:1, name:1, adult:1}))
+    return response.json(await Blog.find({}).populate('user', { username: 1, name: 1, adult: 1 }))
   } catch (exception) {
     return response.status(500).end()
   }
@@ -21,14 +21,13 @@ const getTokenFrom = (request) => {
 
 blogsRouter.post('/', async (request, response) => {
   console.log(request.body)
-
   try {
 
     const token = getTokenFrom(request)
     const decodedToken = jwt.decode(token, process.env.SECRET)
 
     if (!token || !decodedToken.id) {
-      return response.status(401).send({error: 'no token'})
+      return response.status(401).send({ error: 'no token' })
     }
 
     if (request.body === undefined) {
@@ -36,7 +35,7 @@ blogsRouter.post('/', async (request, response) => {
     }
 
     if (request.body.title === undefined || request.body.url === undefined) {
-      return response.status(400).json({ error: 'bad request'})
+      return response.status(400).json({ error: 'bad request' })
     }
 
     //const user = User.findById(body.userId)
@@ -53,13 +52,15 @@ blogsRouter.post('/', async (request, response) => {
     })
 
     const savedBlog = await blog.save()
+    console.log(savedBlog)
     response.json(savedBlog)
 
     user.blogs = user.blogs.concat(savedBlog._id)
+    console.log(user)
     await user.save()
 
   } catch (exception) {
-    if (exception.name === 'JsonWebTokenError' ) {
+    if (exception.name === 'JsonWebTokenError') {
       response.status(401).json({ error: exception.message })
     } else {
       console.log(exception)
@@ -76,12 +77,12 @@ blogsRouter.put('/:id', async (request, response) => {
       likes: body.likes
     }
 
-    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, {new:true})
+    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
     response.json(updatedBlog)
 
   } catch (error) {
     console.log(error)
-    response.status(400).send({error: 'malformatted id'})
+    response.status(400).send({ error: 'malformatted id' })
   }
 })
 
@@ -92,15 +93,15 @@ blogsRouter.delete('/:id', async (request, response) => {
     decodedToken = jwt.decode(token, process.env.SECRET)
 
     if (!token || !decodedToken.id) {
-      return response.status(401).send({error: 'no token'})
+      return response.status(401).send({ error: 'no token' })
     }
 
     const user = await User.findById(decodedToken.id)
     const blog = await Blog.findById(request.params.id)
-  
+
     if (blog.user.toString() !== user.id.toString()) {
-      
-      return response.status(500).send({error: 'cant delete this blog'})
+
+      return response.status(500).send({ error: 'cant delete this blog' })
     }
 
     await Blog.findByIdAndRemove(request.params.id)
@@ -108,10 +109,10 @@ blogsRouter.delete('/:id', async (request, response) => {
     user.blogs = user.blogs.filter(b => b.toString() !== blog._id.toString())
     await user.save()
 
-    response.status(204).end()
+    response.status(200).end()
   } catch (error) {
     console.log(error)
-    response.status(400).json({error: 'something went wrong...'})
+    response.status(400).json({ error: 'something went wrong...' })
   }
 })
 

@@ -25,11 +25,28 @@ describe('Get request', () => {
 
 describe('Post request', () => {
 
+    beforeAll(async () => {
+        User.remove({})
+        const newUser = {
+            username: 'matti',
+            name: 'Matti Luukkainen',
+            password: 'salainen'
+        }
+        await api.post('/api/users').send(newUser)
+    })
+
     beforeEach(async () => {
         await Blog.remove({})
     })
 
     test('creates a new blog from given data if data is correct', async () => {
+
+        const body = {
+            username:'matti',
+            password:'salainen'
+        }
+
+        user = await api.post('/api/login').send(body)
 
         const blog = {
             title: 'Internet Protocol',
@@ -41,6 +58,7 @@ describe('Post request', () => {
         const blogsBefore = await helper.blogsInDb()
 
         await api.post('/api/blogs')
+            .set('Authorization', `Bearer ${user.body.token}`)
             .send(blog)
             .expect(200)
         
@@ -51,6 +69,14 @@ describe('Post request', () => {
     })
 
     test('creates a new blog and sets likes to 0 if likes not given', async () => {
+
+        const body = {
+            username:'matti',
+            password:'salainen'
+        }
+
+        user = await api.post('/api/login').send(body)
+
         const blog = {
             title: 'Stuff',
             author: 'Some guy',
@@ -61,6 +87,7 @@ describe('Post request', () => {
 
         await api.post('/api/blogs')
             .send(blog)
+            .set('Authorization', `Bearer ${user.body.token}`)
             .expect(200)
         
         const blogsAfter = await helper.blogsInDb()
@@ -71,6 +98,14 @@ describe('Post request', () => {
     })
 
     test('doesnt create a new blog if title and url missing', async () => {
+
+        const body = {
+            username:'matti',
+            password:'salainen'
+        }
+
+        user = await api.post('/api/login').send(body)
+
         const blog = {
             author: 'Nope',
             likes: 10
@@ -80,6 +115,7 @@ describe('Post request', () => {
 
         await api.post('/api/blogs')
             .send(blog)
+            .set('Authorization', `Bearer ${user.body.token}`)
             .expect(400)
         
         const blogsAfter = helper.blogsInDb()
@@ -88,6 +124,14 @@ describe('Post request', () => {
     })
 
     test('doesnt create a new blog if title is missing', async () => {
+
+        const body = {
+            username:'matti',
+            password:'salainen'
+        }
+
+        user = await api.post('/api/login').send(body)
+
         const blog = {
             author: 'Nope',
             likes: 10,
@@ -98,6 +142,7 @@ describe('Post request', () => {
 
         await api.post('/api/blogs')
             .send(blog)
+            .set('Authorization', `Bearer ${user.body.token}`)
             .expect(400)
 
         const blogsAfter = helper.blogsInDb()
@@ -108,25 +153,41 @@ describe('Post request', () => {
 
 describe('Delete request', async () => {
 
-    let addedBlog
-
     beforeAll(async () => {
-        addedBlog = new Blog({
+        User.remove({})
+        Blog.remove({})
+        const newUser = {
+            username: 'matti',
+            name: 'Matti Luukkainen',
+            password: 'salainen'
+        }
+        await api.post('/api/users').send(newUser)
+    })
+
+    test('removes a quest with matching id', async () => {
+        const body = {
+            username:'matti',
+            password:'salainen'
+        }
+
+        user = await api.post('/api/login').send(body)
+
+        const newBlog = {
             title: 'DELETE THIS',
             author: 'NOTHING',
             url: 'http://www.nothing.com',
             likes: 10
-        })
-        await addedBlog.save()
-    })
-
-    test('removes a quest with matching id', async () => {
+        }
+        const addedBlog = await api.post('/api/blogs')
+                            .send(newBlog)
+                            .set("Authorization", `Bearer ${user.body.token}`)
 
         const blogsBefore = await helper.blogsInDb()
 
         await api
-            .delete(`/api/blogs/${addedBlog._id}`)
-            .expect(204)
+            .delete(`/api/blogs/${addedBlog.body._id}`)
+            .set('Authorization', `Bearer ${user.body.token}`)
+            .expect(200)
         
         const blogsAfter = await helper.blogsInDb()
 
@@ -134,7 +195,7 @@ describe('Delete request', async () => {
     })
 })
 
-describe.only('when there is initially one user at db', async () => {
+describe('when there is initially one user at db', async () => {
     beforeEach(async () => {
         await User.remove({})
         const user = new User({ username: 'root', password: 'sekret' })

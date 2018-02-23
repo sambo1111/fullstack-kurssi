@@ -1,5 +1,6 @@
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const axios = require('axios')
 
 const blogs = [
     {
@@ -68,6 +69,8 @@ const initDb = async () => {
     blogObject = new Blog(blogs[2])
     await blogObject.save()
 }
+
+
 module.exports = {
     blogs, format, nonExistingId, blogsInDb, initDb, usersInDb
 }
