@@ -19,9 +19,12 @@
     "http": "0.0.0",
     "jsonwebtoken": "^8.1.1",
     "mongoose": "^5.0.1",
-    "nodemon": "^1.14.12"
+    "nodemon": "^1.14.12",
+    "prop-types": "^15.6.1"
   },
   "devDependencies": {
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-16": "^1.1.1",
     "jest": "^22.3.0",
     "supertest": "^3.0.0"
   }
