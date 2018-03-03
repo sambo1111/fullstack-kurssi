@@ -17,9 +17,11 @@ describe('<SimpleBlog />', () => {
   
       const simpleBlogComponent = shallow(<SimpleBlog blog={blog} onClick={onClick} />)
       const titleAuthorDiv = simpleBlogComponent.find('.titleAuthor')
-  
+      const likeDiv = simpleBlogComponent.find('.likes')
+
       expect(titleAuthorDiv.text()).toContain(blog.title)
       expect(titleAuthorDiv.text()).toContain(blog.author)
+      expect(likeDiv.text()).toContain(blog.likes.toString())
     })
 
     it ('calls onClick two times if like button is clicked twice', () => {
