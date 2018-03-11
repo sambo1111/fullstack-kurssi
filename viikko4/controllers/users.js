@@ -41,14 +41,12 @@ usersRouter.post('/', async (request, response) => {
     }
 })
 
-usersRouter.get('/', async (request, response) => {
-    try {
-        users = await User.find({}).populate('blogs', {_id:0, __v:0})
-        response.json(users.map(u => formatUser(u)))
-    } catch (exception) {
-        console.log(exception)
-        response.json(500).json({ error: 'something went wrong' })
-    }
+usersRouter.get('/', (request, response) => {
+    console.log('jejej')
+
+    User.find({}).populate('blogs', {_id:0, __v:0}).then(users =>
+    response.json(users.map(u => formatUser(u))))
+    
 })
 
 module.exports = usersRouter
